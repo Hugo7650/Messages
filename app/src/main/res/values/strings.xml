@@ -140,4 +140,6 @@
         Haven't found some strings? There's more at
         https://github.com/FossifyOrg/Commons/tree/master/commons/src/main/res
     -->
+    <string name="simple_string">普通字符串</string>
+    <string name="regular_expression">正则表达式</string>
 </resources>

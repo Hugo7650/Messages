@@ -1,12 +1,13 @@
 package org.fossify.messages.helpers
 
 import org.fossify.commons.helpers.ExportResult
+import org.fossify.messages.dialogs.BlockedKeyword
 import java.io.OutputStream
 
 object BlockedKeywordsExporter {
 
     fun exportBlockedKeywords(
-        blockedKeywords: ArrayList<String>,
+        blockedKeywords: List<BlockedKeyword>,
         outputStream: OutputStream?,
         callback: (result: ExportResult) -> Unit,
     ) {
@@ -18,7 +19,7 @@ object BlockedKeywordsExporter {
         try {
             outputStream.bufferedWriter().use { out ->
                 out.write(blockedKeywords.joinToString(BLOCKED_KEYWORDS_EXPORT_DELIMITER) {
-                    it
+                    if (it.isRegex) "regex:${it.keyword}" else "simple:${it.keyword}"
                 })
             }
             callback.invoke(ExportResult.EXPORT_OK)

@@ -15,7 +15,7 @@ import org.fossify.messages.databinding.ItemManageBlockedKeywordBinding
 import org.fossify.messages.extensions.config
 
 class ManageBlockedKeywordsAdapter(
-    activity: BaseSimpleActivity, var blockedKeywords: ArrayList<String>, val listener: RefreshRecyclerViewListener?,
+    activity: BaseSimpleActivity, var blockedKeywords: ArrayList<BlockedKeyword>, val listener: RefreshRecyclerViewListener?,
     recyclerView: MyRecyclerView, itemClick: (Any) -> Unit
 ) : MyRecyclerViewAdapter(activity, recyclerView, itemClick) {
     init {
@@ -70,12 +70,13 @@ class ManageBlockedKeywordsAdapter(
 
     private fun getSelectedItems() = blockedKeywords.filter { selectedKeys.contains(it.hashCode()) }
 
-    private fun setupView(view: View, blockedKeyword: String) {
+    private fun setupView(view: View, blockedKeyword: BlockedKeyword) {
         ItemManageBlockedKeywordBinding.bind(view).apply {
             root.setupViewBackground(activity)
             manageBlockedKeywordHolder.isSelected = selectedKeys.contains(blockedKeyword.hashCode())
+            val displayText = if (blockedKeyword.isRegex) "[正则] ${blockedKeyword.keyword}" else blockedKeyword.keyword
             manageBlockedKeywordTitle.apply {
-                text = blockedKeyword
+                text = displayText
                 setTextColor(textColor)
             }
 
@@ -90,7 +91,7 @@ class ManageBlockedKeywordsAdapter(
         }
     }
 
-    private fun showPopupMenu(view: View, blockedKeyword: String) {
+    private fun showPopupMenu(view: View, blockedKeyword: BlockedKeyword) {
         finishActMode()
         val theme = activity.getPopupMenuTheme()
         val contextTheme = ContextThemeWrapper(activity, theme)
@@ -126,17 +127,21 @@ class ManageBlockedKeywordsAdapter(
 
     private fun copyKeywordToClipboard() {
         val selectedKeyword = getSelectedItems().firstOrNull() ?: return
-        activity.copyToClipboard(selectedKeyword)
+        activity.copyToClipboard(selectedKeyword.keyword)
         finishActMode()
     }
 
     private fun deleteSelection() {
-        val deleteBlockedKeywords = HashSet<String>(selectedKeys.size)
+        val deleteBlockedKeywords = HashSet<BlockedKeyword>(selectedKeys.size)
         val positions = getSelectedItemPositions()
 
         getSelectedItems().forEach {
             deleteBlockedKeywords.add(it)
-            activity.config.removeBlockedKeyword(it)
+            if (it.isRegex) {
+                activity.config.removeBlockedRegexKeyword(it.keyword)
+            } else {
+                activity.config.removeBlockedKeyword(it.keyword)
+            }
         }
 
         blockedKeywords.removeAll(deleteBlockedKeywords)

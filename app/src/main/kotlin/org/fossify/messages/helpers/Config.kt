@@ -80,12 +80,24 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getStringSet(BLOCKED_KEYWORDS, HashSet<String>())!!
         set(blockedKeywords) = prefs.edit().putStringSet(BLOCKED_KEYWORDS, blockedKeywords).apply()
 
+    var blockedRegexKeywords: Set<String>
+        get() = prefs.getStringSet(BLOCKED_REGEX_KEYWORDS, HashSet<String>())!!
+        set(blockedRegexKeywords) = prefs.edit().putStringSet(BLOCKED_REGEX_KEYWORDS, blockedRegexKeywords).apply()
+
     fun addBlockedKeyword(keyword: String) {
         blockedKeywords = blockedKeywords.plus(keyword)
     }
 
+    fun addBlockedRegexKeyword(keyword: String) {
+        blockedRegexKeywords = blockedRegexKeywords.plus(keyword)
+    }
+
     fun removeBlockedKeyword(keyword: String) {
         blockedKeywords = blockedKeywords.minus(keyword)
+    }
+
+    fun removeBlockedRegexKeyword(keyword: String) {
+        blockedRegexKeywords = blockedRegexKeywords.minus(keyword)
     }
 
     var exportSms: Boolean

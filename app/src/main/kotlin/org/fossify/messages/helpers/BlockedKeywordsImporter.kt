@@ -21,8 +21,27 @@ class BlockedKeywordsImporter(
                 content
             }
             if (keywords.isNotEmpty()) {
-                keywords.forEach { keyword: String ->
-                    activity.config.addBlockedKeyword(keyword)
+                keywords.forEach { keywordEntry: String ->
+                    when {
+                        keywordEntry.startsWith("regex:") -> {
+                            val keyword = keywordEntry.substringAfter("regex:")
+                            if (keyword.isNotEmpty()) {
+                                activity.config.addBlockedRegexKeyword(keyword)
+                            }
+                        }
+                        keywordEntry.startsWith("simple:") -> {
+                            val keyword = keywordEntry.substringAfter("simple:")
+                            if (keyword.isNotEmpty()) {
+                                activity.config.addBlockedKeyword(keyword)
+                            }
+                        }
+                        else -> {
+                            // 向后兼容，处理旧格式没有类型标记的关键词
+                            if (keywordEntry.isNotEmpty()) {
+                                activity.config.addBlockedKeyword(keywordEntry)
+                            }
+                        }
+                    }
                 }
                 ImportResult.IMPORT_OK
             } else {

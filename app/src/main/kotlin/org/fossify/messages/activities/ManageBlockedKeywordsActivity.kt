@@ -20,6 +20,7 @@ import org.fossify.commons.interfaces.RefreshRecyclerViewListener
 import org.fossify.messages.R
 import org.fossify.messages.databinding.ActivityManageBlockedKeywordsBinding
 import org.fossify.messages.dialogs.AddBlockedKeywordDialog
+import org.fossify.messages.dialogs.BlockedKeyword
 import org.fossify.messages.dialogs.ExportBlockedKeywordsDialog
 import org.fossify.messages.dialogs.ManageBlockedKeywordsAdapter
 import org.fossify.messages.extensions.config
@@ -162,11 +163,16 @@ class ManageBlockedKeywordsActivity : SimpleActivity(), RefreshRecyclerViewListe
 
     private fun exportBlockedKeywordsTo(outputStream: OutputStream?) {
         ensureBackgroundThread {
-            val blockedKeywords = config.blockedKeywords.toArrayList()
-            if (blockedKeywords.isEmpty()) {
+            // 合并普通关键词和正则表达式关键词用于导出
+            val regularKeywords = config.blockedKeywords.toArrayList()
+            val regexKeywords = config.blockedRegexKeywords.toArrayList()
+            val allKeywords = regularKeywords.map { BlockedKeyword(it, false) } + 
+                             regexKeywords.map { BlockedKeyword(it, true) }
+            
+            if (allKeywords.isEmpty()) {
                 toast(org.fossify.commons.R.string.no_entries_for_exporting)
             } else {
-                BlockedKeywordsExporter.exportBlockedKeywords(blockedKeywords, outputStream) {
+                BlockedKeywordsExporter.exportBlockedKeywords(allKeywords, outputStream) {
                     toast(
                         when (it) {
                             ExportResult.EXPORT_OK -> org.fossify.commons.R.string.exporting_successful
@@ -203,26 +209,35 @@ class ManageBlockedKeywordsActivity : SimpleActivity(), RefreshRecyclerViewListe
 
     private fun updateBlockedKeywords() {
         ensureBackgroundThread {
-            val blockedKeywords = config.blockedKeywords.sorted().toArrayList()
+            // 合并普通关键词和正则表达式关键词
+            val regularKeywords = config.blockedKeywords.sorted().toArrayList()
+            val regexKeywords = config.blockedRegexKeywords.sorted().toArrayList()
+            
+            val allKeywords = ArrayList<BlockedKeyword>().apply {
+                addAll(regularKeywords.map { BlockedKeyword(it, false) })
+                addAll(regexKeywords.map { BlockedKeyword(it, true) })
+                sortBy { it.keyword.lowercase() }
+            }
+            
             runOnUiThread {
                 ManageBlockedKeywordsAdapter(
                     activity = this,
-                    blockedKeywords = blockedKeywords,
+                    blockedKeywords = allKeywords,
                     listener = this,
                     recyclerView = binding.manageBlockedKeywordsList
                 ) {
-                    addOrEditBlockedKeyword(it as String)
+                    addOrEditBlockedKeyword(it as BlockedKeyword)
                 }.apply {
                     binding.manageBlockedKeywordsList.adapter = this
                 }
 
-                binding.manageBlockedKeywordsPlaceholder.beVisibleIf(blockedKeywords.isEmpty())
-                binding.manageBlockedKeywordsPlaceholder2.beVisibleIf(blockedKeywords.isEmpty())
+                binding.manageBlockedKeywordsPlaceholder.beVisibleIf(allKeywords.isEmpty())
+                binding.manageBlockedKeywordsPlaceholder2.beVisibleIf(allKeywords.isEmpty())
             }
         }
     }
 
-    private fun addOrEditBlockedKeyword(keyword: String? = null) {
+    private fun addOrEditBlockedKeyword(keyword: BlockedKeyword? = null) {
         AddBlockedKeywordDialog(this, keyword) {
             updateBlockedKeywords()
         }
