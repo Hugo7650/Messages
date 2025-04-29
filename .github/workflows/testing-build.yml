@@ -13,6 +13,7 @@ on:
                 type: string
                 default: 'testers needed'
                 required: false
+    workflow_dispatch:
 
 jobs:
     testing_build:
