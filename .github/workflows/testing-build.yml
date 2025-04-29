@@ -25,7 +25,7 @@ jobs:
                   java-version: 17
                   distribution: 'temurin'
             - name: Build debug APK
-              run: ./gradlew ${{ inputs.build_task }}
+              run: ./gradlew assemblePrepaidDebug
             - name: Upload APK
               id: upload
               uses: actions/upload-artifact@v4
